@@ -9,6 +9,7 @@ from app.api.dependencies import get_current_user, get_current_admin
 
 router = APIRouter()
 
+
 @router.post("/login", response_model=user_schema.TokenOut)
 def login(db: Session = Depends(database.get_db), form_data: OAuth2PasswordRequestForm = Depends()):
     user = db.query(models.User).filter(models.User.username == form_data.username).first()
