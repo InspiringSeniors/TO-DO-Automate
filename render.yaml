@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: todo-automate-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -c gunicorn.conf.py app.main:app
+    plan: free
+    region: singapore   # closest to India; change to "oregon" if Supabase is US-region
+    envVars:
+      - key: DATABASE_URL
+        sync: false       # set manually in Render dashboard (contains password)
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRE_MINUTES
+        value: "1440"
+      - key: GMAIL_EMAIL
+        sync: false
+      - key: GMAIL_APP_PASSWORD
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: internal-resources
+      - key: ALLOWED_ORIGINS
+        value: "https://to-do-automate-71a5.vercel.app,http://localhost:5173"
+      - key: WEB_CONCURRENCY
+        value: "1"           # Prevents APScheduler from firing duplicate emails
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_POOL_SIZE
+        value: "5"
+      - key: DB_MAX_OVERFLOW
+        value: "10"
