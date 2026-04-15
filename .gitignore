@@ -17,7 +17,9 @@ env/
 # ── Secrets / Environment ─────────────────────────────────────────────────────
 backend/.env
 frontend/.env
+frontend/.env.production
 .env
+*.env.local
 
 # ── Database ──────────────────────────────────────────────────────────────────
 *.db

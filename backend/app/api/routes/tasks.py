@@ -27,19 +27,23 @@ def create_task(task: task_schema.TaskCreate, db: Session = Depends(database.get
 
 @router.get("", response_model=list[task_schema.TaskOut])
 def get_tasks(
-    status: str = None, 
+    status: str = None,
     priority: str = None,
     due_today: bool = False,
     overdue: bool = False,
     search: str = None,
-    db: Session = Depends(database.get_db), 
+    user_id: UUID = None,        # admin-only: filter to a specific user
+    db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     query = db.query(models.Task)
-    
-    # Standard employee sees own tasks. Admin sees all.
+
+    # Employee always sees only their own tasks.
+    # Admin sees all by default, or a specific user's if user_id is provided.
     if current_user.role != "admin":
         query = query.filter(models.Task.user_id == current_user.id)
+    elif user_id:
+        query = query.filter(models.Task.user_id == user_id)
         
     if status:
         query = query.filter(models.Task.status == status)
