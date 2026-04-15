@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from apscheduler.schedulers.background import BackgroundScheduler
+from sqlalchemy.exc import OperationalError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -25,20 +26,40 @@ async def lifespan(app: FastAPI):
     if not db_url or db_url.startswith("sqlite"):
         logger.warning("⚠️  DATABASE_URL is not set or is SQLite. Set it to a PostgreSQL URL for production.")
 
-    # Ensure all DB tables exist (idempotent)
-    from app.db.database import engine
-    from app.db.models import Base
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables verified/created.")
+    # Ensure all DB tables exist (idempotent).
+    # In some hosting environments, outbound DB connectivity can be temporarily unavailable at boot.
+    # We should not crash the whole app just because the DB isn't reachable yet.
+    db_ok = False
+    if os.getenv("SKIP_DB_INIT"):
+        logger.info("SKIP_DB_INIT is set; skipping DB initialization.")
+    else:
+        try:
+            from app.db.database import engine
+            from app.db.models import Base
+            Base.metadata.create_all(bind=engine)
+            db_ok = True
+            logger.info("Database tables verified/created.")
+        except OperationalError:
+            logger.exception(
+                "Database is unreachable during startup. "
+                "App will start, but DB-backed routes and scheduled jobs may fail until connectivity is restored."
+            )
+        except Exception:
+            logger.exception("Unexpected error during DB initialization; continuing startup.")
+
+    app.state.db_ok = db_ok
 
     from app.scheduler.jobs import send_pending_reminders, send_morning_digest, send_overdue_digest
-    scheduler.add_job(send_pending_reminders, "interval", minutes=5,    id="reminder_job")
-    # 09:30 IST = 04:00 UTC  → morning digest + Excel attachment
-    scheduler.add_job(send_morning_digest,    "cron", hour=4,  minute=0,  id="digest_morning",   timezone="UTC")
-    # 15:00 IST = 09:30 UTC  → afternoon HTML-only overdue digest
-    scheduler.add_job(send_overdue_digest,    "cron", hour=9,  minute=30, id="digest_afternoon", timezone="UTC")
-    scheduler.start()
-    logger.info("APScheduler started — reminders every 5 min | morning Excel digest 9:30 IST | afternoon digest 3:00 IST.")
+    if db_ok:
+        scheduler.add_job(send_pending_reminders, "interval", minutes=5,    id="reminder_job")
+        # 09:30 IST = 04:00 UTC  → morning digest + Excel attachment
+        scheduler.add_job(send_morning_digest,    "cron", hour=4,  minute=0,  id="digest_morning",   timezone="UTC")
+        # 15:00 IST = 09:30 UTC  → afternoon HTML-only overdue digest
+        scheduler.add_job(send_overdue_digest,    "cron", hour=9,  minute=30, id="digest_afternoon", timezone="UTC")
+        scheduler.start()
+        logger.info("APScheduler started — reminders every 5 min | morning Excel digest 9:30 IST | afternoon digest 3:00 IST.")
+    else:
+        logger.warning("Skipping APScheduler startup because DB was not reachable at boot.")
     yield
     scheduler.shutdown(wait=False)
     logger.info("APScheduler stopped.")
