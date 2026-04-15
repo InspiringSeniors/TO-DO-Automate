@@ -1,10 +1,10 @@
-import { FileText, Download, Trash2, FileImage, File } from 'lucide-react'
+import { FileText, Download, Trash2, FileImage, File, User } from 'lucide-react'
 import { deleteResource } from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 
 interface Resource {
   id: string; title: string; description?: string; file_url: string
-  file_type: string; created_at: string; uploaded_by?: string
+  file_type: string; created_at: string; uploaded_by?: string; uploader_name?: string
 }
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -44,7 +44,15 @@ export default function ResourceCard({ resource, onDeleted }: Props) {
         {resource.description && <p className="text-xs text-slate-400 mt-1 line-clamp-2">{resource.description}</p>}
       </div>
 
-      <p className="text-xs text-slate-600">{new Date(resource.created_at).toLocaleDateString()}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-slate-600">{new Date(resource.created_at).toLocaleDateString()}</p>
+        {resource.uploader_name && (
+          <p className="text-xs text-slate-500 flex items-center gap-1">
+            <User size={11} className="text-slate-600" />
+            {resource.uploader_name}
+          </p>
+        )}
+      </div>
 
       <div className="flex gap-2 pt-1 border-t border-slate-800">
         <a href={resource.file_url} target="_blank" rel="noreferrer" className="btn-ghost flex-1 justify-center text-xs py-1.5">

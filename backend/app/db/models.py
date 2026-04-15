@@ -41,6 +41,7 @@ class Resource(Base):
     file_url = Column(Text, nullable=False)
     file_type = Column(String(50))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    uploader = relationship("User", foreign_keys=[uploaded_by])
 
 class MeetingTranscript(Base):
     __tablename__ = "meeting_transcripts"

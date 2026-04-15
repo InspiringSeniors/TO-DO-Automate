@@ -5,8 +5,9 @@ import TaskFilterPanel from '../components/tasks/TaskFilterPanel'
 import AddTaskModal from '../components/tasks/AddTaskModal'
 import EditTaskModal from '../components/tasks/EditTaskModal'
 import UploadExcelModal from '../components/tasks/UploadExcelModal'
-import { getTasks } from '../services/api'
-import { Plus, Upload, Loader2 } from 'lucide-react'
+import SmartPriorityPanel from '../components/tasks/SmartPriorityPanel'
+import { getTasks, exportTasksExcel } from '../services/api'
+import { Plus, Upload, Download, Loader2 } from 'lucide-react'
 
 interface Task {
   id: string; task_name: string; description?: string
@@ -22,6 +23,24 @@ export default function Tasks() {
   const [showAdd, setShowAdd] = useState(false)
   const [showExcel, setShowExcel] = useState(false)
   const [editTask, setEditTask] = useState<Task | null>(null)
+  const [exporting, setExporting] = useState(false)
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const { data, headers } = await exportTasksExcel()
+      const url = URL.createObjectURL(new Blob([data], { type: headers['content-type'] }))
+      const link = document.createElement('a')
+      link.href = url
+      const cd = headers['content-disposition'] || ''
+      const match = cd.match(/filename="?([^"]+)"?/)
+      link.download = match ? match[1] : 'tasks.xlsx'
+      link.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const fetchTasks = useCallback(async () => {
     setLoading(true)
@@ -49,6 +68,10 @@ export default function Tasks() {
             <p className="text-slate-400 text-sm">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</p>
           </div>
           <div className="flex gap-2">
+            <button onClick={handleExport} disabled={exporting} className="btn-ghost">
+              {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+              Export Excel
+            </button>
             <button onClick={() => setShowExcel(true)} className="btn-ghost">
               <Upload size={16} /> Import Excel
             </button>
@@ -57,6 +80,9 @@ export default function Tasks() {
             </button>
           </div>
         </div>
+
+        {/* Smart Prioritization */}
+        <SmartPriorityPanel tasks={tasks} onRefresh={fetchTasks} />
 
         {/* Filters */}
         <TaskFilterPanel filters={filters} onChange={setFilters} />

@@ -1,6 +1,6 @@
 import os
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 from uuid import UUID
 
@@ -20,6 +20,13 @@ ALLOWED_TYPES = {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     "text/csv", "text/plain", "image/png", "image/jpeg"
 }
+
+def _enrich(resource: models.Resource) -> dict:
+    """Convert a Resource ORM object to a dict with uploader_name populated."""
+    data = {c.name: getattr(resource, c.name) for c in resource.__table__.columns}
+    data["uploader_name"] = resource.uploader.full_name if resource.uploader else None
+    return data
+
 
 @router.post("", response_model=resource_schema.ResourceOut)
 async def upload_resource(
@@ -46,19 +53,30 @@ async def upload_resource(
     db.add(resource)
     db.commit()
     db.refresh(resource)
-    return resource
+    # Re-query to get uploader relationship loaded
+    resource = (
+        db.query(models.Resource)
+        .options(joinedload(models.Resource.uploader))
+        .filter(models.Resource.id == resource.id)
+        .first()
+    )
+    return _enrich(resource)
 
 
 @router.get("", response_model=list[resource_schema.ResourceOut])
 def get_resources(
     search: Optional[str] = None,
+    user_id: Optional[UUID] = None,
     db: Session = Depends(database.get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    query = db.query(models.Resource)
+    query = db.query(models.Resource).options(joinedload(models.Resource.uploader))
     if search:
         query = query.filter(models.Resource.title.ilike(f"%{search}%"))
-    return query.order_by(models.Resource.created_at.desc()).all()
+    if user_id:
+        query = query.filter(models.Resource.uploaded_by == user_id)
+    resources = query.order_by(models.Resource.created_at.desc()).all()
+    return [_enrich(r) for r in resources]
 
 
 @router.delete("/{resource_id}", status_code=status.HTTP_204_NO_CONTENT)

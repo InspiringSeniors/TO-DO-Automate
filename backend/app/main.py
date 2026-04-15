@@ -15,11 +15,21 @@ scheduler = BackgroundScheduler()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Ensure all DB tables exist (idempotent)
+    from app.db.database import engine
+    from app.db.models import Base
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables verified/created.")
+
     # Import here to avoid circular imports at module load
-    from app.scheduler.jobs import send_pending_reminders
+    from app.scheduler.jobs import send_pending_reminders, send_morning_digest, send_overdue_digest
     scheduler.add_job(send_pending_reminders, "interval", minutes=5, id="reminder_job")
+    # 09:30 IST = 04:00 UTC  → morning digest with Excel attachment
+    scheduler.add_job(send_morning_digest,  "cron", hour=4,  minute=0,  id="digest_morning",   timezone="UTC")
+    # 15:00 IST = 09:30 UTC  → afternoon HTML-only overdue digest
+    scheduler.add_job(send_overdue_digest,  "cron", hour=9,  minute=30, id="digest_afternoon", timezone="UTC")
     scheduler.start()
-    logger.info("APScheduler started – reminder job every 5 minutes.")
+    logger.info("APScheduler started – reminders every 5 min | morning Excel digest 9:30 IST | afternoon digest 3:00 IST.")
     yield
     scheduler.shutdown(wait=False)
     logger.info("APScheduler stopped.")

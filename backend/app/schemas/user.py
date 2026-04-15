@@ -18,6 +18,13 @@ class UserOut(UserBase):
     class Config:
         from_attributes = True
 
+class UserBasic(BaseModel):
+    id: UUID
+    full_name: str
+
+    class Config:
+        from_attributes = True
+
 class TokenOut(BaseModel):
     access_token: str
     token_type: str

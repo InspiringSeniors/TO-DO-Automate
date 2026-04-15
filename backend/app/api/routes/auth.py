@@ -52,3 +52,8 @@ def get_me(current_user: models.User = Depends(get_current_user)):
 @router.get("", response_model=list[user_schema.UserOut])
 def get_users(db: Session = Depends(database.get_db), current_admin: models.User = Depends(get_current_admin)):
     return db.query(models.User).all()
+
+@router.get("/users-list", response_model=list[user_schema.UserBasic])
+def get_users_list(db: Session = Depends(database.get_db), current_user: models.User = Depends(get_current_user)):
+    """Lightweight user list (id + name) available to all authenticated users — used for dropdowns."""
+    return db.query(models.User).order_by(models.User.full_name).all()

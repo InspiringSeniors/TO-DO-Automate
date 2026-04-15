@@ -10,6 +10,7 @@ class ResourceCreate(BaseModel):
 class ResourceOut(BaseModel):
     id: UUID
     uploaded_by: Optional[UUID]
+    uploader_name: Optional[str] = None
     title: str
     description: Optional[str]
     file_url: str

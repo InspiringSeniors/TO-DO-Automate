@@ -48,10 +48,15 @@ export const uploadExcel = (file: File) => {
   fd.append('file', file)
   return apiClient.post('/tasks/upload-excel', fd)
 }
+export const exportTasksExcel = () =>
+  apiClient.get('/tasks/export-excel', { responseType: 'blob' })
 
 // ── Resources ─────────────────────────────────────────────────────────────────
-export const getResources = (search?: string) =>
-  apiClient.get('/resources', { params: search ? { search } : undefined })
+export const getResources = (params?: { search?: string; user_id?: string }) =>
+  apiClient.get('/resources', { params })
 export const uploadResource = (formData: FormData) =>
   apiClient.post('/resources', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
 export const deleteResource = (id: string) => apiClient.delete(`/resources/${id}`)
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+export const getUsersList = () => apiClient.get('/auth/users-list')
