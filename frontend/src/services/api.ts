@@ -39,6 +39,8 @@ export const createUser = (data: object) => apiClient.post('/auth/create', data)
 
 // ── Tasks ─────────────────────────────────────────────────────────────────────
 export const getTasks = (params?: object) => apiClient.get('/tasks', { params })
+export const getUserTasks = (userId: string, params?: object) =>
+  apiClient.get('/tasks', { params: { ...params, user_id: userId } })
 export const createTask = (data: object) => apiClient.post('/tasks', data)
 export const updateTask = (id: string, data: object) => apiClient.put(`/tasks/${id}`, data)
 export const deleteTask = (id: string) => apiClient.delete(`/tasks/${id}`)
