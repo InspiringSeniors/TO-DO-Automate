@@ -77,4 +77,12 @@
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
            bg-emerald-500/20 text-emerald-400;
   }
+  .badge-overdue {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-red-500/20 text-red-400;
+  }
+  .badge-in_progress {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+           bg-indigo-500/20 text-indigo-400;
+  }
 }

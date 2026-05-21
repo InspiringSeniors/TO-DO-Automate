@@ -1,10 +1,11 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, CheckSquare, FolderOpen, Users, LogOut, Zap } from 'lucide-react'
+import { LayoutDashboard, CheckSquare, Target, FolderOpen, Users, LogOut, Zap } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/tasks', label: 'Tasks', icon: CheckSquare },
+  { to: '/goals', label: 'Goals', icon: Target },
   { to: '/resources', label: 'Resources', icon: FolderOpen },
 ]
 

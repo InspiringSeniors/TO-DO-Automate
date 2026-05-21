@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import MainLayout from '../components/layout/MainLayout'
 import Modal from '../components/common/Modal'
 import UserTasksPanel from '../components/admin/UserTasksPanel'
+import UserGoalsPanel from '../components/admin/UserGoalsPanel'
 import { getUsers, createUser } from '../services/api'
-import { UserPlus, Shield, User, Loader2, ClipboardList } from 'lucide-react'
+import { UserPlus, Shield, User, Loader2, ClipboardList, Target } from 'lucide-react'
 
 interface UserItem {
   id: string; full_name: string; email: string
@@ -15,6 +16,7 @@ export default function AdminUsers() {
   const [loading, setLoading]       = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserItem | null>(null)
+  const [goalsUser, setGoalsUser] = useState<UserItem | null>(null)
   const [form, setForm]             = useState({ full_name: '', email: '', username: '', password: '', role: 'employee' })
   const [creating, setCreating]     = useState(false)
   const [err, setErr]               = useState('')
@@ -47,7 +49,7 @@ export default function AdminUsers() {
           <div>
             <h2 className="text-lg font-bold text-white">Team Members</h2>
             <p className="text-slate-400 text-sm">
-              {users.length} account{users.length !== 1 ? 's' : ''} · click a row to view their tasks
+              {users.length} account{users.length !== 1 ? 's' : ''} · click a row to view tasks or goals
             </p>
           </div>
           <button onClick={() => setShowCreate(true)} className="btn-primary">
@@ -101,13 +103,24 @@ export default function AdminUsers() {
                     <td className="px-4 py-3 text-slate-500 text-xs">
                       {new Date(u.created_at).toLocaleDateString()}
                     </td>
-                    {/* View tasks hint */}
+                    {/* Action buttons */}
                     <td className="px-4 py-3 text-right">
-                      <span className="inline-flex items-center gap-1.5 opacity-0 group-hover:opacity-100
-                                       transition-opacity text-xs text-brand-400 font-medium">
-                        <ClipboardList size={13} />
-                        View tasks
-                      </span>
+                      <div className="flex items-center gap-2 justify-end">
+                        <span className="inline-flex items-center gap-1.5 opacity-0 group-hover:opacity-100
+                                         transition-opacity text-xs text-brand-400 font-medium">
+                          <ClipboardList size={13} />
+                          Tasks
+                        </span>
+                        <button
+                          onClick={e => { e.stopPropagation(); setGoalsUser(u) }}
+                          className="inline-flex items-center gap-1.5 opacity-0 group-hover:opacity-100
+                                     transition-opacity text-xs text-emerald-400 font-medium
+                                     hover:underline"
+                        >
+                          <Target size={13} />
+                          Goals
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -122,6 +135,14 @@ export default function AdminUsers() {
         <UserTasksPanel
           user={selectedUser}
           onClose={() => setSelectedUser(null)}
+        />
+      )}
+
+      {/* User goals slide-over panel */}
+      {goalsUser && (
+        <UserGoalsPanel
+          user={goalsUser}
+          onClose={() => setGoalsUser(null)}
         />
       )}
 

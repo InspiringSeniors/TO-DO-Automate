@@ -50,3 +50,33 @@ class MeetingTranscript(Base):
     transcript_text = Column(Text)
     transcript_file_url = Column(Text)
     imported_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class Goal(Base):
+    __tablename__ = "goals"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(255), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", backref="goals")
+    strategies = relationship("Strategy", backref="goal", cascade="all, delete", order_by="Strategy.created_at")
+
+class Strategy(Base):
+    __tablename__ = "strategies"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    goal_id = Column(UUID(as_uuid=True), ForeignKey("goals.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(255), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    activities = relationship("Activity", backref="strategy", cascade="all, delete", order_by="Activity.due_datetime")
+
+class Activity(Base):
+    __tablename__ = "activities"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    strategy_id = Column(UUID(as_uuid=True), ForeignKey("strategies.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(255), nullable=False)
+    description = Column(Text)
+    due_datetime = Column(DateTime(timezone=True), nullable=False)
+    status = Column(String(50), default="pending")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())

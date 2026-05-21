@@ -62,3 +62,29 @@ export const deleteResource = (id: string) => apiClient.delete(`/resources/${id}
 
 // ── Users ─────────────────────────────────────────────────────────────────────
 export const getUsersList = () => apiClient.get('/auth/users-list')
+
+// ── Goals ─────────────────────────────────────────────────────────────────────
+export const getGoals = (params?: { user_id?: string }) => apiClient.get('/goals', { params })
+export const createGoal = (data: { title: string }) => apiClient.post('/goals', data)
+export const deleteGoal = (goalId: string) => apiClient.delete(`/goals/${goalId}`)
+
+export const createStrategy = (goalId: string, data: { title: string }) =>
+  apiClient.post(`/goals/${goalId}/strategies`, data)
+export const deleteStrategy = (goalId: string, strategyId: string) =>
+  apiClient.delete(`/goals/${goalId}/strategies/${strategyId}`)
+
+export const createActivity = (
+  goalId: string,
+  strategyId: string,
+  data: { title: string; description?: string; due_datetime: string }
+) => apiClient.post(`/goals/${goalId}/strategies/${strategyId}/activities`, data)
+
+export const updateActivity = (
+  goalId: string,
+  strategyId: string,
+  activityId: string,
+  data: object
+) => apiClient.put(`/goals/${goalId}/strategies/${strategyId}/activities/${activityId}`, data)
+
+export const deleteActivity = (goalId: string, strategyId: string, activityId: string) =>
+  apiClient.delete(`/goals/${goalId}/strategies/${strategyId}/activities/${activityId}`)
